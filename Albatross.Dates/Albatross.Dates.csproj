@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net8.0;netstandard2.1</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<PackageReleaseNotes>See release-notes.md file</PackageReleaseNotes>
+		<PackageProjectUrl>$(RepositoryProjectRoot)/dates/Albatross.Dates</PackageProjectUrl>
+		<Description>Utilities that works with dates and times</Description>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\..\icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+</Project>
