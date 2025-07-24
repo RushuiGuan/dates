@@ -169,7 +169,7 @@ namespace Albatross.Dates {
 		public static DateOnly StartOfMonth(this DateOnly date) => new DateOnly(date.Year, date.Month, 1);
 		public static DateOnly EndOfMonth(this DateOnly date) => new DateOnly(date.Year, date.Month, DateTime.DaysInMonth(date.Year, date.Month));
 
-		public static DateOnly GetNearestWeekday(this DateOnly date, bool usePrevious = false) {
+		public static DateOnly NearestWeekday(this DateOnly date, bool usePrevious = false) {
 			if (date.IsWeekDay()) {
 				return date;
 			} else if (usePrevious) {
