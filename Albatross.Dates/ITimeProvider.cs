@@ -1,10 +1,10 @@
 ﻿using System;
 
 namespace Albatross.Dates {
-	public interface IClock {
+	public interface ITimeProvider {
 		DateTime UtcNow { get; }
 	}
-	public class SystemClock : IClock {
+	public class SystemClock : ITimeProvider {
 		public DateTime UtcNow => DateTime.UtcNow;
 	}
 }
