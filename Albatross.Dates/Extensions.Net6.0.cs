@@ -179,7 +179,7 @@ namespace Albatross.Dates {
 			}
 		}
 		public static TimeSpan Substract(this DateOnly d1, DateOnly d2)
-			=> TimeSpan.FromDays(d2.DayNumber - d1.DayNumber);
+			=> TimeSpan.FromDays(d1.DayNumber - d2.DayNumber);
 	}
 }
 #endif
