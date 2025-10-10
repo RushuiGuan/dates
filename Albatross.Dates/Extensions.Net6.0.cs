@@ -178,6 +178,8 @@ namespace Albatross.Dates {
 				return date.NextWeekday();
 			}
 		}
+		public static TimeSpan Substract(this DateOnly d1, DateOnly d2)
+			=> TimeSpan.FromDays(d2.DayNumber - d1.DayNumber);
 	}
 }
 #endif
