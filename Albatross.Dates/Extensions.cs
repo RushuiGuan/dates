@@ -3,6 +3,26 @@ using System.Threading.Tasks;
 
 namespace Albatross.Dates {
 	public static partial class Extensions {
+		public static DateTime Local2Utc(this DateTime local, TimeSpan gmtOffset) => DateTime.SpecifyKind(local - gmtOffset, DateTimeKind.Utc);
+		public static DateTime Utc2Local(this DateTime utc, TimeSpan gmtOffset) => DateTime.SpecifyKind(utc + gmtOffset, DateTimeKind.Unspecified);
+		public static DateTimeOffset Utc2DateTimeOffset(this DateTime utc, TimeSpan gmtOffset) => new DateTimeOffset(utc.Utc2Local(gmtOffset), gmtOffset);
+		public static TimeSpan GmtOffset(this DateTime utc, DateTime local) => local - utc;
+
+		public static DateTimeOffset Local2DateTimeOffset(this DateTime local, TimeZoneInfo timeZone) {
+			local = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+			var gmtOffset = timeZone.GetUtcOffset(local);
+			return new DateTimeOffset(local, gmtOffset);
+		}
+		public static DateTimeOffset Utc2DateTimeOffset(this DateTime utc, TimeZoneInfo timeZone) {
+			var gmtOffset = timeZone.GetUtcOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc));
+			return new DateTimeOffset(utc.Utc2Local(gmtOffset), gmtOffset);
+		}
+
+		public static string ISO8601StringDateOnly(this DateTime value) => value.ToString(Formatting.ISO8601DateOnly);
+		public static string ISO8601String(this DateTime value) => value.ToString(Formatting.ISO8601);
+		public static string ISO8601String(this DateTimeOffset value) => value.ToString(Formatting.ISO8601);
+		public static string ISO8601String(this DateOnly value) => value.ToString(Formatting.ISO8601DateOnly);
+		public static string ISO8601String(this TimeOnly value) => value.ToString(Formatting.ISO8601TimeOnly);
 		/// <summary>
 		/// Return the next weekday from a provided date.  If the provided date is Monday, the next 0 weekday is the same date and the 
 		/// next 1 weekday would be Tuesday.  If the provided date falls on the weekend, the next 0 weekday and the next 1 weekday are both
@@ -13,14 +33,14 @@ namespace Albatross.Dates {
 		/// <param name="date">the starting date</param>
 		/// <param name="numberOfWeekDays">number of week days to count</param>
 		/// <exception cref="ArgumentException">exception will be thrown if the numberOfWeekDays parameter is less than 0</exception>
-		public static DateTime NextWeekday(this DateTime date, int numberOfWeekDays = 1) {
+		public static DateOnly NextWeekday(this DateOnly date, int numberOfWeekDays = 1) {
 			if (numberOfWeekDays == 0) {
 				if (date.DayOfWeek == DayOfWeek.Sunday) {
-					return date.Date.AddDays(1);
+					return date.AddDays(1);
 				} else if (date.DayOfWeek == DayOfWeek.Saturday) {
-					return date.Date.AddDays(2);
+					return date.AddDays(2);
 				} else {
-					return date.Date;
+					return date;
 				}
 			} else if (numberOfWeekDays > 0) {
 				if (date.DayOfWeek == DayOfWeek.Sunday) {
@@ -30,7 +50,7 @@ namespace Albatross.Dates {
 				}
 				if (numberOfWeekDays >= 5) {
 					var weeks = numberOfWeekDays / 5;
-					date = date.Date.AddDays(7 * weeks);
+					date = date.AddDays(7 * weeks);
 				}
 				var remaining = numberOfWeekDays % 5;
 				if ((int)date.DayOfWeek + remaining > 5) {
@@ -51,14 +71,14 @@ namespace Albatross.Dates {
 		/// <param name="numberOfWeekDays"></param>
 		/// <returns></returns>
 		/// <exception cref="ArgumentException">exception will be thrown if the numberOfWeekDays parameter is less than 0</exception>
-		public static DateTime PreviousWeekday(this DateTime date, int numberOfWeekDays = 1) {
+		public static DateOnly PreviousWeekday(this DateOnly date, int numberOfWeekDays = 1) {
 			if (numberOfWeekDays == 0) {
 				if (date.DayOfWeek == DayOfWeek.Sunday) {
-					return date.Date.AddDays(-2);
+					return date.AddDays(-2);
 				} else if (date.DayOfWeek == DayOfWeek.Saturday) {
-					return date.Date.AddDays(-1);
+					return date.AddDays(-1);
 				} else {
-					return date.Date;
+					return date;
 				}
 			} else if (numberOfWeekDays > 0) {
 				if (date.DayOfWeek == DayOfWeek.Sunday) {
@@ -68,7 +88,7 @@ namespace Albatross.Dates {
 				}
 				if (numberOfWeekDays >= 5) {
 					var weeks = numberOfWeekDays / 5;
-					date = date.Date.AddDays(-7 * weeks);
+					date = date.AddDays(-7 * weeks);
 				}
 				var remaining = numberOfWeekDays % 5;
 				if ((int)date.DayOfWeek - remaining < 1) {
@@ -81,7 +101,7 @@ namespace Albatross.Dates {
 			}
 		}
 
-		public static bool IsWeekDay(this DateTime date) => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday;
+		public static bool IsWeekDay(this DateOnly date) => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday;
 
 		/// <summary>
 		/// Similar to NextWeekDay method but the caller can pass in a predicate to check if a date is a business day.  The method is also async, because
@@ -91,7 +111,7 @@ namespace Albatross.Dates {
 		/// <param name="numberOfBusinessDays"></param>
 		/// <param name="isBusinessDay"></param>
 		/// <returns></returns>
-		public static async Task<DateTime> NextBusinessDay(this DateTime date, int numberOfBusinessDays = 1, Func<DateTime, Task<bool>>? isBusinessDay = null) {
+		public static async Task<DateOnly> NextBusinessDay(this DateOnly date, int numberOfBusinessDays = 1, Func<DateOnly, Task<bool>>? isBusinessDay = null) {
 			if (isBusinessDay == null) { isBusinessDay = args => Task.FromResult(IsWeekDay(args)); }
 			for (int i = 0; i < numberOfBusinessDays; i++) {
 				date = date.AddDays(1);
@@ -104,7 +124,7 @@ namespace Albatross.Dates {
 			}
 			return date;
 		}
-		public static async Task<DateTime> PreviousBusinessDay(this DateTime date, int numberOfBusinessDays = 1, Func<DateTime, Task<bool>>? isBusinessDay = null) {
+		public static async Task<DateOnly> PreviousBusinessDay(this DateOnly date, int numberOfBusinessDays = 1, Func<DateOnly, Task<bool>>? isBusinessDay = null) {
 			if (isBusinessDay == null) { isBusinessDay = args => Task.FromResult(IsWeekDay(args)); }
 			for (int i = 0; i < numberOfBusinessDays; i++) {
 				date = date.AddDays(-1);
@@ -120,7 +140,7 @@ namespace Albatross.Dates {
 		/// <summary>
 		/// find the nth day of week from the given date
 		/// </summary>
-		public static DateTime GetNthDayOfWeek(this DateTime date, int n, DayOfWeek dayOfWeek) {
+		public static DateOnly GetNthDayOfWeek(this DateOnly date, int n, DayOfWeek dayOfWeek) {
 			var diff = dayOfWeek - date.DayOfWeek;
 			if (diff < 0) {
 				diff = 7 - System.Math.Abs(diff);
@@ -128,20 +148,28 @@ namespace Albatross.Dates {
 			return date.AddDays(diff + (n - 1) * 7);
 		}
 
-		public static int GetMonthDiff(this DateTime date1, DateTime date2)
+		/// <summary>
+		/// Return the difference in total month number between two dates.  The difference between 2022-01-31 and 2022-02-01 is 1
+		/// even through they are only 1 day apart
+		/// </summary>
+		/// <param name="date1"></param>
+		/// <param name="date2"></param>
+		/// <returns></returns>
+		public static int GetMonthDiff(this DateOnly date1, DateOnly date2)
 			=> ((date2.Year - date1.Year) * 12) + date2.Month - date1.Month;
 
-		public static int GetNumberOfWeekdays(this DateTime d1, DateTime d2) {
-			DateTime startDate, endDate;
-			if (d1 < d2) {
+		public static int GetWeekDayDiff(this DateOnly d1, DateOnly d2) {
+			DateOnly startDate, endDate;
+			var factor = 1;
+			if (d1 <= d2) {
 				startDate = d1;
 				endDate = d2;
 			} else {
+				factor = -1;
 				startDate = d2;
 				endDate = d1;
 			}
-
-			int totalDays = Convert.ToInt32(Math.Round((endDate.Date - startDate.Date).TotalDays, 0)) + 1;
+			int totalDays = endDate.DayNumber - startDate.DayNumber + 1;
 			int completeWeeks = totalDays / 7;
 			int weekdays = completeWeeks * 5;
 
@@ -154,30 +182,26 @@ namespace Albatross.Dates {
 				if (day != DayOfWeek.Saturday && day != DayOfWeek.Sunday)
 					weekdays++;
 			}
-			return weekdays;
+			return weekdays * factor;
 		}
+		public static int GetAbsWeekDayDiff(this DateOnly d1, DateOnly d2) => Math.Abs(GetWeekDayDiff(d1, d2));
+
+		[Obsolete("Use GetAbsWeekDayDiff method instead")]
+		public static int GetNumberOfWeekdays(this DateOnly d1, DateOnly d2) => GetAbsWeekDayDiff(d1, d2);
 
 
-		public static DateTime Local2Utc(this DateTime local, TimeSpan gmtOffset) => DateTime.SpecifyKind(local - gmtOffset, DateTimeKind.Utc);
-		public static DateTime Utc2Local(this DateTime utc, TimeSpan gmtOffset) => DateTime.SpecifyKind(utc + gmtOffset, DateTimeKind.Unspecified);
-		public static DateTimeOffset Utc2DateTimeOffset(this DateTime utc, TimeSpan gmtOffset) => new DateTimeOffset(utc.Utc2Local(gmtOffset), gmtOffset);
-		public static TimeSpan GmtOffset(this DateTime utc, DateTime local) => local - utc;
-
-		public static DateTimeOffset Local2DateTimeOffset(this DateTime local, TimeZoneInfo timeZone) {
-			local = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
-			var gmtOffset = timeZone.GetUtcOffset(local);
-			return new DateTimeOffset(local, gmtOffset);
+		public static DateOnly StartOfMonth(this DateOnly date) => new DateOnly(date.Year, date.Month, 1);
+		public static DateOnly EndOfMonth(this DateOnly date) => new DateOnly(date.Year, date.Month, DateTime.DaysInMonth(date.Year, date.Month));
+		public static DateOnly NearestWeekday(this DateOnly date, bool usePrevious = false) {
+			if (date.IsWeekDay()) {
+				return date;
+			} else if (usePrevious) {
+				return date.PreviousWeekday();
+			} else {
+				return date.NextWeekday();
+			}
 		}
-		public static DateTimeOffset Utc2DateTimeOffset(this DateTime utc, TimeZoneInfo timeZone) {
-			var gmtOffset = timeZone.GetUtcOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc));
-			return new DateTimeOffset(utc.Utc2Local(gmtOffset), gmtOffset);
-		}
-
-		public static string ISO8601StringDateOnly(this DateTime value) => value.ToString(Formatting.ISO8601DateOnly);
-		public static string ISO8601String(this DateTime value) => value.ToString(Formatting.ISO8601);
-		public static string ISO8601String(this DateTimeOffset value) => value.ToString(Formatting.ISO8601);
-
-		public static DateTime StartOfMonth(this DateTime date) => new DateTime(date.Year, date.Month, 1);
-		public static DateTime EndOfMonth(this DateTime date) => new DateTime(date.Year, date.Month, DateTime.DaysInMonth(date.Year, date.Month));
+		public static TimeSpan Substract(this DateOnly d1, DateOnly d2)
+			=> TimeSpan.FromDays(d1.DayNumber - d2.DayNumber);
 	}
 }
